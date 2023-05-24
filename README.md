@@ -62,6 +62,38 @@ python scrtips/mnist_sampling_and_acc.py --yaml <path to the yaml you used> --ck
  python imagenet32_fid_stats.py --fid_dir <path you want to save your real data stats>
 ```
 
+## CelebA32 Stats
+Generate statistics for the training data:
+```bash
+python fid/compute_dataset_stats.py \
+    --dataset ldm.data.celeba.CelebATrain \
+    --data_size 32 \
+    --fid_dir ./fid/stats \
+    --save_name celeba32_train_stats
+```
+
+Generate samples:
+```bash
+python sampling/unconditional_sampling.py \
+    --yaml path/to/config.yaml \
+    --ckpt path/to/checkpoint.ckpt \
+    -o celeba32_samples.pt
+```
+
+Compute samples statistics:
+```bash
+python fid/compute_samples_stats.py \
+    --samples celeba32_samples.pt \
+    --fid_dir ./fid/stats \
+    --save_name celeba32_samples_stats
+```
+
+Compute FID:
+```bash
+python fid/compute_fid.py \
+    --path1 celeba32_train_stats.npz \
+    --path2 celeba32_samples_stats.npz
+```
 
 # Comments
 Our code is based on [Latent Diffusion Models](https://github.com/CompVis/latent-diffusion), thanks for open sourcing!
