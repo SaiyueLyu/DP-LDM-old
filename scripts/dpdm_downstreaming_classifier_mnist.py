@@ -1,3 +1,5 @@
+# This scripts is built on https://github.com/nv-tlabs/DPDM/blob/main/train_downstream_classifiers.py to make a fair comparison of table 1 in our paper
+
 import argparse
 import torch
 import torch.nn as nn
@@ -51,30 +53,7 @@ class LogReg(nn.Module):
     def pred(self, x):
         x = x.reshape(x.shape[0], -1)
         return F.softmax(self.net(x), dim=1)
-
-
-
-# class CNN(nn.Module):
-#     def __init__(self):
-#         super(CNN, self).__init__()
-#         self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1)
-#         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
-#         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-#         self.fc1 = nn.Linear(32 * 8 * 8, 64)
-#         self.fc2 = nn.Linear(64, 10)
-#
-#     def forward(self, x):
-#         x = self.conv1(x)
-#         x = nn.functional.relu(x)
-#         x = self.pool(x)
-#         x = self.conv2(x)
-#         x = nn.functional.relu(x)
-#         x = self.pool(x)
-#         x = x.view(-1, 32 * 8 * 8)
-#         x = self.fc1(x)
-#         x = nn.functional.relu(x)
-#         x = self.fc2(x)
-#         return x
+    
 
 class CNN(nn.Module):
     def __init__(self):
@@ -189,19 +168,11 @@ def train_all_classifiers(train_set_loader, test_set_loader, device, batch_size)
 
     train_cnn_acc, test_cnn_acc = train_cnn(
         train_set_loader, test_set_loader, train_dataset_loader, test_dataset_loader, device)
-    # train_cnn_acc, test_cnn_acc = 0,0
     train_mlp_acc, test_mlp_acc = train_mlp(
         train_set_loader, test_set_loader, train_dataset_loader, test_dataset_loader, device)
-    # train_mlp_acc, test_mlp_acc = 0,0
     train_log_rec_acc, test_log_rec_acc = train_log_reg(
         train_set_loader, test_set_loader, train_dataset_loader, test_dataset_loader, device)
-    # train_log_rec_acc, test_log_rec_acc = 0,0
     return train_cnn_acc, test_cnn_acc, train_mlp_acc, test_mlp_acc, train_log_rec_acc, test_log_rec_acc
-
-    # test_cnn_acc = train_cnn(train_set_loader, test_set_loader, train_dataset_loader, test_dataset_loader, device)
-    # test_mlp_acc = train_mlp(train_set_loader, test_set_loader, train_dataset_loader, test_dataset_loader, device)
-    # test_log_rec_acc = train_log_reg(train_set_loader, test_set_loader, train_dataset_loader, test_dataset_loader, device)
-    # return test_cnn_acc,  test_mlp_acc,  test_log_rec_acc
 
 
 class TrainDataset(torch.utils.data.Dataset):
@@ -256,19 +227,9 @@ class TestDataset(torch.utils.data.Dataset):
 
 def main(args):
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    # device = 'cpu'
 
-    # path = "sampling/conditional_3_ch_mnist_samples.pt"
-    # dataset = torch.load(path)
-    # assert len(dataset["image"]) == len(dataset["class_label"])
-    # split = int(len(dataset["image"])*2 /3) # split at 2/3 place
-    # train_dataset = {"image": dataset["image"][: split],
-    #                  "class_label": dataset["class_label"][: split] }
-    # eval_dataset = {"image": dataset["image"][split:],
-    #                  "class_label": dataset["class_label"][split:] }
-
-    train_dataset = TrainDataset(path="sampling/conditional_1_ch_mnist_samples_train_50k.pt")
-    eval_dataset = TestDataset(path="sampling/conditional_1_ch_mnist_samples_test_10k.pt")
+    train_dataset = TrainDataset(path="args.train")
+    eval_dataset = TestDataset(path="args.test")
     train_queue = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True)
     eval_queue = torch.utils.data.DataLoader(dataset=eval_dataset, batch_size=args.batch_size, shuffle=True)
 
@@ -283,8 +244,8 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # parser.add_argument('--dataset', type=str, choices=['mnist28', 'fmnist28'], required=True)
-    # parser.add_argument('--train_path', type=str, required=True)
-    # parser.add_argument('--eval_path', type=str, required=True)
+    parser.add_argument('--train', type=str, required=True)
+    parser.add_argument('--test', type=str, required=True)
     parser.add_argument('--batch_size', type=int, default=128)
     args = parser.parse_args()
 
