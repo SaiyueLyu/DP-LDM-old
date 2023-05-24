@@ -97,14 +97,14 @@ def main():
     dic = {'image': grid,
            'class_label': labels
            }
-    # torch.save(dic, 'eps-100-epoch-1-test.pt')
+    torch.save(dic, 'eps-100-epoch-1-test.pt')
 
-    grid = make_grid(grid, nrow=10)
-    #to image
-    grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
-    # print("shape of grid is : ", grid.shape) shape of grid is :  (104, 206, 3)
-    plotted_imgs=Image.fromarray(grid.astype(np.uint8))
-    im1 = plotted_imgs.save("fmnisteps10.jpg")
+#     grid = make_grid(grid, nrow=10)
+#     #to image
+#     grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
+#     # print("shape of grid is : ", grid.shape) shape of grid is :  (104, 206, 3)
+#     plotted_imgs=Image.fromarray(grid.astype(np.uint8))
+#     im1 = plotted_imgs.save("fmnisteps10.jpg")
 
 
 
