@@ -9,7 +9,7 @@ from tqdm import tqdm
 import torch as pt
 import torchvision
 from torchvision import transforms
-#from ldm.data.cifar10 import CIFAR10Train, CIFAR10Val
+
 
 def set_seeds(rank, seed):
     random.seed(rank + seed)
@@ -36,9 +36,7 @@ def stats_from_dataloader(dataloader, model, device='cpu', save_memory=False):
         pbar = tqdm(dataloader)
         for batch in pbar:
             x = batch[0] if (isinstance(batch, tuple) or isinstance(batch, list)) else batch
-            #x = x["image"]
             x = x.to(device)
-            #x = x.permute(0,3,1,2)
 
             pbar.set_description(f"x.shape={tuple(x.shape)} | x.min()={x.min()} | x.max()={x.max()}")
             
@@ -96,8 +94,6 @@ def stats_from_dataloader(dataloader, model, device='cpu', save_memory=False):
 
 def main(args):
     device = 'cuda' if pt.cuda.is_available() else 'cpu'
-    #device = 'cpu'
-    print(os.getcwd())
 
     data_path=os.path.join(os.getcwd(), '..', 'data/cifar10')
 
@@ -105,19 +101,14 @@ def main(args):
         os.makedirs(data_path)
     
     transformations = [transforms.Resize(32), transforms.ToTensor()]
-    #                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]
     if args.test:
         print("fid for test dataset")
         dataset =  torchvision.datasets.CIFAR10(root=data_path, train=False, transform=transforms.Compose(transformations), download=True)
-        #dataset = CIFAR10Val()
         name_f = 'cifar10_test_pytorch_fid.npz'
     else:    
         print("fid for train dataset")
         dataset =  torchvision.datasets.CIFAR10(root=data_path, train=True,  transform=transforms.Compose(transformations), download=True)
-        #dataset = torchvision.datasets.CIFAR10(root=data_path, train=True, download=True)
-        #dataset = CIFAR10Train()
-        print(dataset)
-        name_f = 'cifar10_train_pytorch_fid_range01.npz'
+        name_f = 'cifar10_train_pytorch_fid.npz'
 
     if not os.path.exists(args.fid_dir):
         os.makedirs(args.fid_dir)
@@ -136,7 +127,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('')
     parser.add_argument('--batch_size', type=int, default=128, help='batch size per GPU')
     parser.add_argument('--fid_dir', type=str, default='', help='Directory to store fid stats')
-    parser.add_argument('--is_fmnist', action='store_true')
     parser.add_argument('--test', action='store_true')
     args = parser.parse_args()
 
