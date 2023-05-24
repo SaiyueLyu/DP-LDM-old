@@ -952,10 +952,6 @@ class LatentDiffusion(DDPM):
     def log_images(self, batch, N=8, n_row=4, sample=True, ddim_steps=400, ddim_eta=1., return_keys=None,
                    quantize_denoised=True, inpaint=False, plot_denoise_rows=False, plot_progressive_rows=True,
                    plot_diffusion_rows=True, **kwargs):
-    # def log_images(self, batch, N=8, n_row=4, sample=True, ddim_steps=200, ddim_eta=1., return_keys=None,
-    #                quantize_denoised=True, inpaint=True, plot_denoise_rows=False, plot_progressive_rows=True,
-    #                plot_diffusion_rows=True, **kwargs):
-
         use_ddim = ddim_steps is not None
 
         log = dict()
@@ -964,7 +960,6 @@ class LatentDiffusion(DDPM):
                                            force_c_encode=True,
                                            return_original_cond=True,
                                            bs=N)
-        # breakpoint()
         N = min(x.shape[0], N)
         n_row = min(x.shape[0], n_row)
         log["inputs"] = x
@@ -977,12 +972,7 @@ class LatentDiffusion(DDPM):
                 xc = log_txt_as_img((x.shape[2], x.shape[3]), batch["caption"])
                 log["conditioning"] = xc
             elif self.cond_stage_key == 'class_label':
-                # print("class label xc is : ", xc)
-                # print("batch is : ", batch)
-                # print('batch["class_label] is : ', batch["class_label"])
-                # breakpoint()
-                # xc = log_txt_as_img((x.shape[2], x.shape[3]), batch["human_label"])  #### for imagenet
-                xc = log_txt_as_img((x.shape[2], x.shape[3]), batch["class_label"])  ### for svhn added by saiyue
+                xc = log_txt_as_img((x.shape[2], x.shape[3]), batch["class_label"])
                 log['conditioning'] = xc
             elif isimage(xc):
                 log["conditioning"] = xc
@@ -1012,7 +1002,6 @@ class LatentDiffusion(DDPM):
             with self.ema_scope("Plotting"):
                 samples, z_denoise_row = self.sample_log(cond=c, batch_size=N, ddim=use_ddim,
                                                          ddim_steps=ddim_steps, eta=ddim_eta)
-                # samples, z_denoise_row = self.sample(cond=c, batch_size=N, return_intermediates=True)
             x_samples = self.decode_first_stage(samples)
             log["samples"] = x_samples
             if plot_denoise_rows:
@@ -1026,8 +1015,6 @@ class LatentDiffusion(DDPM):
                     samples, z_denoise_row = self.sample_log(cond=c,batch_size=N,ddim=use_ddim,
                                                              ddim_steps=ddim_steps,eta=ddim_eta,
                                                              quantize_denoised=True)
-                    # samples, z_denoise_row = self.sample(cond=c, batch_size=N, return_intermediates=True,
-                    #                                      quantize_denoised=True)
                 x_samples = self.decode_first_stage(samples.to(self.device))
                 log["samples_x0_quantized"] = x_samples
 
@@ -1148,7 +1135,7 @@ class LatentDiffusion(DDPM):
             print("totol:{}, trainable:{}, trainable2:{}, percentage:{}".format(total_num, trainable_num, trainable_num2, trainable_num / total_num))
 
         elif self.train_attention_only:
-            self.model.requires_grad_(False) ### added by saiyue
+            self.model.requires_grad_(False)
             for nm, m in self.model.named_modules():
                 if isinstance(m, AttentionBlock):
                     m.requires_grad_(True)
