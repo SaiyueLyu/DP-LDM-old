@@ -61,3 +61,8 @@ python scrtips/mnist_sampling_and_acc.py --yaml <path to the yaml you used> --ck
 ```
  python imagenet32_fid_stats.py --fid_dir <path you want to save your real data stats>
 ```
+
+
+# Comments
+Our code is based on [Latent Diffusion Models](https://github.com/CompVis/latent-diffusion), thanks for open sourcing.
+Our code is also based on [Transferring Pretrained Diffusion Probabilistic Models](https://openreview.net/forum?id=8u9eXwu5GAb), thanks the authors for sending the codes before making it public! 
