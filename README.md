@@ -55,7 +55,7 @@ python scrtips/mnist_sampling_and_acc.py --yaml <path to the yaml you used> --ck
 ```
  - Compute synthetic data stats + fid:
  ```
- python
+ python compute_synth_cifar10_fid.py --path_real_stats <path you stored real data stats> --path_model <path to directory model> --path_pre_train_ldm <path to pre-trained model checkpoint> 
  ```
 
 ## Imagenet32 stats
