@@ -4,7 +4,7 @@
 
 # Prepare model checkpoints :
 - download the pretrained models (we will update this soon)
-- change the 'ckpt_path` in the corresponding yaml files
+- change the `ckpt_path` in the corresponding yaml files
 - change the `batch_size` you want in the corresponding yaml files to fit your machine.
 
 # Pretrain autoencoder (step 1) :
