@@ -1070,111 +1070,40 @@ class LatentDiffusion(DDPM):
             raise RuntimeError("Cannot get dataloader in configure_optimizers")
 
     def configure_optimizers(self): ##### check transdiff
-        lr = self.learning_rate
+        print("#### Finetuning ####")
 
-        #transdiff
         att_params = []
         if self.train_condition_only:
             self.model.requires_grad_(False)
-            # self.cond_stage_model.requires_grad_(False) ### this is important
-            print(f"{self.__class__.__name__}: Disable the gradient")
-            print(f"{self.__class__.__name__}: ONLY optimizing ATTENTION params!")
-            # params = self.cond_stage_model.parameters()
-            if self.ablation_blocks > 0:
-                # self.cond_stage_model.requires_grad_(False)  ### need to set to be False, otw raise an error "One of the differentiated Tensors does not require grad",
-                # which is due to that we are updating the cond_stage_models, need to backwards to some layers which are frozen, which has no gradient.
-                # This is fixed by only setting every layers require_grad = True, but only adding the needed ones to att_params to feed to optimizer
-                ALL_BLOCKS = 16
-                current_block = 0
-                # params = self.cond_stage_model.parameters()
-                for nm, m in self.model.named_modules():
-                    if isinstance(m, SpatialTransformer):
-                        current_block += 1
-                        m.requires_grad_(True)
-                        if current_block >= self.ablation_blocks:
-                            print("Tuning SpatialTransformer Layer {}".format(current_block))
-                            # m.requires_grad_(True)
-                            for np, p in m.named_parameters():
-                                att_params.append(p)
-
-                print("Total {} SpatialTransformer Layer".format(current_block))
-
-                for p in self.cond_stage_model.parameters():
-                    att_params.append(p)
-                print("the cond_stage_model params requires_grad is : ",
-                      [p.requires_grad for p in self.cond_stage_model.parameters()])
-
-                import numpy
-                def test(module): return numpy.all([p.requires_grad for p in module.parameters()]) and isinstance(module, SpatialTransformer)
-                attentionlayers = [(name, module) for name, module in self.model.named_modules() if test(module)]
-                print([name for name, mod in attentionlayers])
-
-            else:
-                for nm, m in self.model.named_modules():
-                    if isinstance(m, SpatialTransformer):
-                        m.requires_grad_(True)
-                        for np, p in m.named_parameters():
-                            att_params.append(p)
-
-                for p in self.cond_stage_model.parameters():
-                    att_params.append(p)
-
-                print("the cond_stage_model params requires_grad is : ", [p.requires_grad for p in self.cond_stage_model.parameters()])
-                # breakpoint()
-                # [p.requires_grad for p in self.cond_stage_model.parameters()]
-                # [True]  #with cond_stage_trainable :True
-
-                # [p.requires_grad for p in self.cond_stage_model.parameters()]
-                # [False]  #with cond_stage_trainable :False
-
-            params = att_params
-            print("update SpatialTransformer")
-            total_num = sum(p.numel() for p in self.model.parameters())
-            trainable_num = sum(p.numel() for p in params if p.requires_grad)
-            trainable_num2 = sum(p.numel() for p in params)
-            print("totol:{}, trainable:{}, trainable2:{}, percentage:{}".format(total_num, trainable_num, trainable_num2, trainable_num / total_num))
-
-        elif self.train_attention_only:
-            self.model.requires_grad_(False)
-            for nm, m in self.model.named_modules():
-                if isinstance(m, AttentionBlock):
+            spatial_modules = [x for x in self.model.modules() if isinstance(x, SpatialTransformer)]
+            for i, m in enumerate(spatial_modules):
+                # Do not unfreeze the first `self.ablation_blocks` AttentionBlocks
+                if i + 1 >= self.ablation_blocks:
                     m.requires_grad_(True)
-                    for np, p in m.named_parameters():
-                        att_params.append(p)
-            print("update AttentionBlock")
+                    att_params.extend(m.parameters())
+            params = att_params
+            
+            num_blocks = len(spatial_modules)
+            num_blocks_tuned = num_blocks - max(self.ablation_blocks, 0)
+            print(f"  {num_blocks_tuned}/{num_blocks} SpatialTransformers will be trained")
+        elif self.train_attention_only:
+            print("  Training (unconditional) AttentionBlocks only")
+            self.model.requires_grad_(False)
+            attention_modules = [x for x in self.model.modules() if isinstance(x, AttentionBlock)]
+            for i, m in enumerate(attention_modules):
+                # Do not unfreeze the first `self.ablation_blocks` AttentionBlocks
+                if i + 1 >= self.ablation_blocks:
+                    m.requires_grad_(True)
+                    att_params.extend(m.parameters())
             params = att_params
 
-            total_num = sum(p.numel() for p in self.model.parameters())
-            trainable_num = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-            print("totol:{}, trainable:{}, percentage:{}".format(total_num, trainable_num, trainable_num / total_num))
-
-
-        # elif self.ablation_blocks>0 and self.train_condition_only:
-        #     self.model.requires_grad_(False)
-        #     self.cond_stage_model.requires_grad_(False)
-        #     print(f"{self.__class__.__name__}: Disable the gradient")
-        #     print(f"{self.__class__.__name__}: ONLY optimizing CERTAIN attention params!")
-        #     ALL_BLOCKS=18
-        #     current_block=0
-        #     # params = self.cond_stage_model.parameters()
-        #     for nm, m in self.model.named_modules():
-        #         if isinstance(m, SpatialTransformer):
-        #             current_block+=1
-        #             print("ANL Layer {}".format(current_block))
-        #             if current_block>=self.ablation_blocks:
-        #                 print("Tuning ANL Layer {}".format(current_block))
-        #                 m.requires_grad_(True)
-        #                 for np, p in m.named_parameters():
-        #                     att_params.append(p)
-        #     print("Total {} ANL Layer".format(current_block))
-        #     params = att_params
+            num_blocks = len(attention_modules)
+            num_blocks_tuned = num_blocks - max(self.ablation_blocks, 0)
+            print(f"  {num_blocks_tuned}/{num_blocks} AttentionBlocks will be trained")
         else:
-            lr = self.learning_rate
             self.model.requires_grad_(True)
-            # self.cond_stage_model.requires_grad_(False)
             if self.ablation_blocks > 0: #this does not work!!!!!
                 self.model.requires_grad_(False)
-                ALL_BLOCKS = 16
                 current_block = 0
                 TUNEFLAG = False
                 att_params = []
@@ -1190,28 +1119,23 @@ class LatentDiffusion(DDPM):
                         for np, p in m.named_parameters():
                             att_params.append(p)
                 params = att_params
-                # print("Total {} ANL Layer".format(current_block))
             else:
                 params = list(self.model.parameters())
-                print(f"{self.__class__.__name__}: Updating the whole nets")
             # if self.cond_stage_trainable:
             #     print(f"{self.__class__.__name__}: Also optimizing conditioner params!")
             #     params = params + list(self.cond_stage_model.parameters())
             if self.learn_logvar:
-                print('Diffusion model optimizing logvar')
+                print('  Diffusion model optimizing logvar')
                 params.append(self.logvar)
 
-        # params = list(self.model.parameters())
-        # if self.cond_stage_trainable:
-        #     print(f"{self.__class__.__name__}: Also optimizing conditioner params!")
-        #     params = params + list(self.cond_stage_model.parameters())
-        # if self.learn_logvar:
-        #     print('Diffusion model optimizing logvar')
-        #     params.append(self.logvar)
+        num_params = sum(p.numel() for p in self.model.parameters())
+        num_grad = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        num_train = sum(p.numel() for p in params)
+        print(f"  {num_grad}/{num_params} ({num_grad/num_params*100:.02f}%) parameters will compute gradients")
+        print(f"  {num_train}/{num_params} ({num_train/num_params*100:.02f}%) parameters will be trained")
+        print()
 
-        # breakpoint()
-
-        opt = torch.optim.AdamW(params, lr=lr)
+        opt = torch.optim.AdamW(params, lr=self.learning_rate)
 
         # Wrap the optimizer if differentially private training is enabled
         if self.dp_config and self.dp_config.enabled:
@@ -1246,11 +1170,6 @@ class LatentDiffusion(DDPM):
             print("  Delta:", self.dp_config.delta)
             print("  Noise Scale:", self.noise_scale)
             print()
-        # gc.collect()
-        total_num = sum(p.numel() for p in self.model.parameters())
-        trainable_num = sum(p.numel() for p in self.model.parameters() if p.requires_grad) # you should look at [for p in params], this is just to verify the print num is a larger one:)
-        print("total:{}, trainable:{}, percentage:{}".format(total_num, trainable_num, trainable_num / total_num))
-        # get_parameter_number(self.model)
 
         if self.use_scheduler:
             assert 'target' in self.scheduler_config
