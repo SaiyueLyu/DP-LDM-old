@@ -14,7 +14,7 @@ model:
     channels: 3
     cond_stage_trainable: True  #class conditioning
     conditioning_key: "crossattn"   #class  conditioning
-    monitor: "val/loss"     #'val/loss_simple_ema'
+    monitor: "val/loss" 
 #    use_ema: False # need to use ema
 
     scheduler_config: # 10000 warmup steps
