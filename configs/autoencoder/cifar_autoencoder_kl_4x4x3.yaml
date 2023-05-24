@@ -18,26 +18,24 @@ model:
       in_channels: 3
       out_ch: 3
       ch: 128
-      ch_mult: [ 1,2,3,5]  # num_down = len(ch_mult)-1
+      ch_mult: [ 1,2,3,5] 
       num_res_blocks: 2
-      attn_resolutions: [32,16,8 ] #what is this? some yaml are empty
+      attn_resolutions: [32,16,8 ] 
       dropout: 0.0
 
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 24 #12
+    batch_size: 24 
     wrap: True
     train:
-      target: ldm.data.cifar10.CIFAR10Train # ldm.data.imagenet.ImageNetSRTrain
+      target: ldm.data.cifar10.CIFAR10Train 
       params:
         size: 32
-#        degradation: pil_nearest
     validation:
-      target: ldm.data.cifar10.CIFAR10Val # ldm.data.imagenet.ImageNetSRValidation
+      target: ldm.data.cifar10.CIFAR10Val 
       params:
         size: 32
-#        degradation: pil_nearest
 
 lightning:
   callbacks:
