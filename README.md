@@ -53,8 +53,11 @@ python scrtips/mnist_sampling_and_acc.py --yaml <path to the yaml you used> --ck
 ```
  python cifar10_fid_stats.py --fid_dir <path you want to save your real data stats>
 ```
- - Generated data:
- 
+ - Compute synthetic data stats + fid:
+ ```
+ python
+ ```
+
 ## Imagenet32 stats
 
  - Real val data: 
