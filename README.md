@@ -25,7 +25,7 @@ CUDA_VISIBLE_DEVICES=0 python main.py --base <path to fine-tune yaml> -t --gpus 
 ```
 
 # Sampling (step 4) :
-To have conditional sampling (for MNIST, FMNIST, CIFAR10), the command is :
+To have conditional sampling (for MNIST, CIFAR10), the command is :
 ```
 python sampling/cond_sampling_test.py -y <path to the yaml you used> -ckpt <path to the ckpt you want to sample from> -n 10 -c 0 1 2 3 4 -bs 2
 ```
